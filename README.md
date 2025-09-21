@@ -34,3 +34,8 @@ Full-stack starter for managing and publishing Dar es Salaam transit routes. Edi
 ## Deployment
 
 Deploy the Next.js app to Vercel, set the environment variables, and point Supabase storage/CDN for attachments. Configure Supabase Auth providers (email + Google) and storage bucket policies as described in the project notes.
+## Project Tracking
+
+- Roadmap & prioritized work: see [TODO.md](./TODO.md).
+- Release notes: maintained in [CHANGELOG.md](./CHANGELOG.md) following Keep a Changelog.
+- Agent guidelines: see [AGENT.md](./AGENT.md) for contribution expectations.
