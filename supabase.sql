@@ -2,6 +2,13 @@
 create extension if not exists postgis;
 create extension if not exists pgcrypto;
 
+-- Profile (create early so the role helper works)
+create table if not exists public.profile (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  role text not null check (role in ('admin','editor','viewer')),
+  created_at timestamptz not null default timezone('utc', now())
+);
+
 -- Roles helper
 create or replace function public.current_profile_role()
 returns text
@@ -206,13 +213,6 @@ create trigger audit_attachments
 after insert or update or delete on public.attachments
 for each row execute function public.write_audit();
 
--- Profile
-create table public.profile (
-  user_id uuid primary key references auth.users(id) on delete cascade,
-  role text not null check (role in ('admin','editor','viewer')),
-  created_at timestamptz not null default timezone('utc', now())
-);
-
 -- RLS
 alter table public.operators enable row level security;
 alter table public.stops enable row level security;
@@ -321,7 +321,7 @@ on public.fares for all using (
   )
 );
 
--- Route variants policies (similar)
+-- Route variants policies
 create policy variants_public_read
 on public.route_variants for select using (
   exists (
