@@ -174,19 +174,27 @@ declare
   payload jsonb;
   key text;
 begin
-  key := coalesce(new.id::text, old.id::text, gen_random_uuid()::text);
   payload := case
     when tg_op = 'DELETE' then to_jsonb(old)
     else to_jsonb(new)
   end;
+
+  key := coalesce(
+    payload ->> 'id',
+    (payload ->> 'route_id') || ':' || (payload ->> 'seq'),
+    gen_random_uuid()::text
+  );
+
   insert into public.audit_log(entity, entity_id, action, diff, actor)
   values (tg_table_name, key, tg_op, payload, auth.uid());
+
   if tg_op = 'DELETE' then
     return old;
   end if;
   return new;
 end;
 $$;
+
 
 -- Attach audit triggers
 create trigger audit_routes
@@ -386,7 +394,8 @@ on public.audit_log for select using (
 );
 
 create policy audit_no_direct_writes
-on public.audit_log for insert using (false);
+on public.audit_log for insert
+with check (false);
 
 -- Profile policies
 create policy profile_self_read
