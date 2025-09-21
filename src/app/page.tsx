@@ -2,10 +2,16 @@ import Link from 'next/link';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
+import type { Tables } from '@/lib/types';
+
+type RouteSummaryRecord = Tables<'routes'> & {
+  start_stop?: { name?: string | null } | null;
+  end_stop?: { name?: string | null } | null;
+};
 
 export default async function HomePage() {
   const supabase = getSupabaseServerClient();
-  const { data: routes } = await supabase
+  const { data } = await supabase
     .from('routes')
     .select(
       `
@@ -22,6 +28,8 @@ export default async function HomePage() {
     )
     .eq('is_published', true)
     .order('display_name');
+
+  const routes = (data ?? []) as unknown as RouteSummaryRecord[];
 
   return (
     <div className="space-y-8">
@@ -41,7 +49,7 @@ export default async function HomePage() {
         </header>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {(routes ?? []).map((route) => (
+          {routes.map((route) => (
             <Card key={route.id} className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -49,7 +57,7 @@ export default async function HomePage() {
                     {route.display_name}
                   </Link>
                   <p className="text-xs text-slate-500">
-                    {route.start_stop?.name ?? 'TBD'} – {route.end_stop?.name ?? 'TBD'}
+                    {route.start_stop?.name ?? 'TBD'} - {route.end_stop?.name ?? 'TBD'}
                   </p>
                 </div>
                 <span
@@ -58,7 +66,7 @@ export default async function HomePage() {
                 />
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                {route.corridors?.map((corridor: string) => (
+                {(route.corridors ?? []).map((corridor: string) => (
                   <Badge key={corridor}>{corridor}</Badge>
                 ))}
                 {route.est_buses && (
@@ -70,7 +78,7 @@ export default async function HomePage() {
               </div>
             </Card>
           ))}
-          {!routes?.length && (
+          {!routes.length && (
             <Card className="p-6 text-sm text-slate-500">
               No routes published yet. Head to the dashboard to create one.
             </Card>

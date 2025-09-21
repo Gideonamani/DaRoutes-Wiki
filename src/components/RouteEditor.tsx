@@ -118,8 +118,8 @@ export function RouteEditor({
     formState: { errors, isSubmitting }
   } = formMethods;
 
-  const stopFieldArray = useFieldArray({ control, name: 'stops', keyName: 'formId' });
-  const fareFieldArray = useFieldArray({ control, name: 'fares', keyName: 'formId' });
+  const stopFieldArray = useFieldArray({ control, name: 'stops' });
+  const fareFieldArray = useFieldArray({ control, name: 'fares' });
 
   const stops = watch('stops');
 
@@ -237,7 +237,7 @@ export function RouteEditor({
 
     values.stops.forEach((stop) => {
       if (stop.stop_id) {
-        stopIdMap.set(stop.local_id, stop.stop_id);
+        stopIdMap.set(stop.local_id, stop.stop_id!);
       }
     });
 

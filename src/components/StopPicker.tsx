@@ -53,7 +53,7 @@ export function StopPicker({ disabledIds = [], onSelect, onCreate }: StopPickerP
       } else {
         const filtered = (data ?? []).filter((stop) => {
           const aliases = stop.name_aliases ?? [];
-          const aliasMatch = aliases.some((alias) =>
+          const aliasMatch = aliases.some((alias: string) =>
             alias.toLowerCase().includes(query.toLowerCase())
           );
           return aliasMatch || true;
@@ -190,7 +190,7 @@ export function StopPicker({ disabledIds = [], onSelect, onCreate }: StopPickerP
                   ...prev,
                   name_aliases: event.target.value
                     .split(',')
-                    .map((alias) => alias.trim())
+                    .map((alias: string) => alias.trim())
                     .filter(Boolean)
                 }))
               }

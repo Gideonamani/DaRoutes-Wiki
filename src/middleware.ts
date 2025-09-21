@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
-import type { Database } from '@/lib/types';
+import type { Database, Tables } from '@/lib/types';
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
@@ -25,9 +25,10 @@ export async function middleware(request: NextRequest) {
     .from('profile')
     .select('role')
     .eq('user_id', session.user.id)
-    .maybeSingle();
+    .maybeSingle<Pick<Tables<'profile'>, 'role'>>();
 
-  if (!profile || !['admin', 'editor'].includes(profile.role)) {
+  const role = profile?.role;
+  if (!role || !['admin', 'editor'].includes(role)) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = '/';
     return NextResponse.redirect(redirectUrl);
