@@ -1,0 +1,104 @@
+import Link from 'next/link';
+import { Suspense } from 'react';
+import { getSupabaseServerClient } from '@/lib/supabaseServer';
+import { Badge } from '@/components/Badge';
+
+interface RoutesPageProps {
+  searchParams?: { q?: string };
+}
+
+async function RoutesTable({ query }: { query?: string }) {
+  const supabase = getSupabaseServerClient();
+
+  let request = supabase
+    .from('routes')
+    .select('id, display_name, slug, color, is_published, updated_at, corridors')
+    .order('updated_at', { ascending: false });
+
+  if (query) {
+    request = request.ilike('display_name', `%${query}%`);
+  }
+
+  const { data: routes } = await request;
+
+  return (
+    <div className="mt-6 space-y-3">
+      {routes?.map((route) => (
+        <Link
+          key={route.id}
+          href={`/dashboard/routes/${route.id}`}
+          className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 hover:border-brand"
+        >
+          <div>
+            <p className="text-sm font-semibold text-slate-900">{route.display_name}</p>
+            <p className="text-xs text-slate-500">Slug: {route.slug}</p>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {route.corridors?.map((corridor: string) => (
+                <Badge key={corridor}>{corridor}</Badge>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span
+              className="h-8 w-8 rounded-full border border-slate-200"
+              style={{ backgroundColor: route.color }}
+            />
+            <Badge
+              colorClassName={
+                route.is_published ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
+              }
+            >
+              {route.is_published ? 'Published' : 'Draft'}
+            </Badge>
+          </div>
+        </Link>
+      ))}
+      {!routes?.length && (
+        <p className="rounded border border-dashed border-slate-300 p-6 text-sm text-slate-500">
+          No routes found. Create one to get started.
+        </p>
+      )}
+    </div>
+  );
+}
+
+export default function RoutesPage({ searchParams }: RoutesPageProps) {
+  return (
+    <div className="space-y-6">
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-900">Routes</h1>
+          <p className="text-sm text-slate-500">
+            Search, filter, and edit route records before publishing.
+          </p>
+        </div>
+        <Link
+          href="/dashboard/routes/new"
+          className="rounded bg-brand-dark px-4 py-2 text-sm font-semibold text-white"
+        >
+          New route
+        </Link>
+      </header>
+
+      <form className="flex items-center gap-2">
+        <input
+          type="search"
+          name="q"
+          defaultValue={searchParams?.q ?? ''}
+          placeholder="Search routes"
+          className="w-full rounded-md border-slate-300 text-sm focus:border-brand focus:ring-brand"
+        />
+        <button
+          type="submit"
+          className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold text-white"
+        >
+          Search
+        </button>
+      </form>
+
+      <Suspense key={searchParams?.q ?? 'all'} fallback={<p>Loading routes…</p>}>
+        <RoutesTable query={searchParams?.q} />
+      </Suspense>
+    </div>
+  );
+}
