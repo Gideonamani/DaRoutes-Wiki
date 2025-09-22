@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 ## [Unreleased]
 ### Added
 - Initial release scaffolding, Supabase integration, CMS dashboard, public wiki, and API endpoints.
+- Google OAuth provider configured in Supabase and verified in app.
 
 ## [0.1.0] - 2025-09-21
 ### Added
@@ -15,4 +16,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - Dashboard route editor with stops, fares, and attachments.
 - Public API endpoints and route wiki page.
 - Supabase schema, RLS policies, and seed data.
+
+
 
