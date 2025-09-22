@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from 'next/link';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
@@ -7,6 +8,33 @@ import type { Tables } from '@/lib/types';
 type RouteSummaryRecord = Tables<'routes'> & {
   start_stop?: { name?: string | null } | null;
   end_stop?: { name?: string | null } | null;
+};
+
+const description = 'Discover Dar es Salaam bus and BRT routes curated by local operators and volunteers.';
+
+export const metadata: Metadata = {
+  title: 'DaRoutes Wiki',
+  description,
+  openGraph: {
+    title: 'DaRoutes Wiki',
+    description,
+    url: '/',
+    type: 'website',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'DaRoutes Wiki logo and tagline'
+      }
+    ]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DaRoutes Wiki',
+    description,
+    images: ['/opengraph-image']
+  }
 };
 
 export default async function HomePage() {
@@ -35,9 +63,7 @@ export default async function HomePage() {
     <div className="space-y-8">
       <section className="rounded-lg bg-white p-6 shadow-sm">
         <h1 className="text-2xl font-semibold text-slate-900">Daroutes Wiki</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Discover Dar es Salaam bus and BRT routes curated by local operators and volunteers.
-        </p>
+        <p className="mt-2 text-sm text-slate-600">{description}</p>
       </section>
 
       <section className="space-y-4">

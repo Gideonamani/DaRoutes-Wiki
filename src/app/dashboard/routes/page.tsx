@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
@@ -6,6 +7,33 @@ import { Badge } from '@/components/Badge';
 interface RoutesPageProps {
   searchParams?: { q?: string };
 }
+
+const description = 'Search, filter, and edit route records before publishing.';
+
+export const metadata: Metadata = {
+  title: 'Routes · DaRoutes Wiki',
+  description,
+  openGraph: {
+    title: 'Routes · DaRoutes Wiki',
+    description,
+    url: '/dashboard/routes',
+    type: 'website',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'Manage DaRoutes route library'
+      }
+    ]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Routes · DaRoutes Wiki',
+    description,
+    images: ['/opengraph-image']
+  }
+};
 
 async function RoutesTable({ query }: { query?: string }) {
   const supabase = getSupabaseServerClient();
@@ -68,9 +96,7 @@ export default function RoutesPage({ searchParams }: RoutesPageProps) {
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">Routes</h1>
-          <p className="text-sm text-slate-500">
-            Search, filter, and edit route records before publishing.
-          </p>
+          <p className="text-sm text-slate-500">{description}</p>
         </div>
         <Link
           href="/dashboard/routes/new"
@@ -96,7 +122,7 @@ export default function RoutesPage({ searchParams }: RoutesPageProps) {
         </button>
       </form>
 
-      <Suspense key={searchParams?.q ?? 'all'} fallback={<p>Loading routes…</p>}>
+      <Suspense key={searchParams?.q ?? 'all'} fallback={<p>Loading routes.</p>}>
         <RoutesTable query={searchParams?.q} />
       </Suspense>
     </div>

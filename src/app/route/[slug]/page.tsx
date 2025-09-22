@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { Badge } from '@/components/Badge';
@@ -13,6 +14,82 @@ type OperatorRecord = Tables<'operators'>;
 
 interface RoutePageProps {
   params: { slug: string };
+}
+
+const FALLBACK_DESCRIPTION = 'Explore Dar es Salaam bus and BRT journeys with detailed stops, fares, and operator insights.';
+
+export async function generateMetadata({ params }: RoutePageProps): Promise<Metadata> {
+  const supabase = getSupabaseServerClient();
+
+  const { data: routeData } = await supabase
+    .from('routes')
+    .select('display_name, corridors, est_buses, hours, notes')
+    .eq('slug', params.slug)
+    .eq('is_published', true)
+    .maybeSingle();
+
+  if (!routeData) {
+    return {
+      title: 'Route not found · DaRoutes Wiki',
+      description: 'The requested published route could not be located.',
+      openGraph: {
+        title: 'Route not found · DaRoutes Wiki',
+        description: 'The requested published route could not be located.',
+        url: `/route/${params.slug}`,
+        type: 'website',
+        images: [
+          {
+            url: '/opengraph-image',
+            width: 1200,
+            height: 630,
+            alt: 'DaRoutes route missing'
+          }
+        ]
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: 'Route not found · DaRoutes Wiki',
+        description: 'The requested published route could not be located.',
+        images: ['/opengraph-image']
+      }
+    } satisfies Metadata;
+  }
+
+  const route = routeData as RouteRecord;
+  const title = `${route.display_name} · DaRoutes Wiki`;
+  const corridorList = (route.corridors ?? []).join(', ');
+  const description =
+    route.notes?.slice(0, 180) ??
+    (corridorList
+      ? `Discover the ${route.display_name} service with corridors ${corridorList}.`
+      : FALLBACK_DESCRIPTION);
+
+  const imageUrl = `/route/${params.slug}/opengraph-image`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `/route/${params.slug}`,
+      type: 'article',
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${route.display_name} route map preview`
+        }
+      ]
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [imageUrl]
+    }
+  } satisfies Metadata;
 }
 
 export default async function RoutePage({ params }: RoutePageProps) {
@@ -128,7 +205,7 @@ export default async function RoutePage({ params }: RoutePageProps) {
               <tr key={stop.local_id} className="border-t border-slate-100">
                 <td className="py-2 text-xs text-slate-500">{index + 1}</td>
                 <td className="py-2 font-medium text-slate-800">{stop.name}</td>
-                <td className="py-2 text-slate-600">{stop.ward ?? '—'}</td>
+                <td className="py-2 text-slate-600">{stop.ward ?? '-'}</td>
                 <td className="py-2 text-xs text-slate-500">
                   {stop.lat.toFixed(5)}, {stop.lng.toFixed(5)}
                 </td>
