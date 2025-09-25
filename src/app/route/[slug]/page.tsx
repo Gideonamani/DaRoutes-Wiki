@@ -10,6 +10,7 @@ type RouteRecord = Tables<'routes'>;
 type RouteStopRecord = Tables<'route_stops'> & { stop?: Tables<'stops'> | null };
 type FareRecord = Tables<'fares'>;
 type AttachmentRecord = Tables<'attachments'>;
+type RouteVariantRecord = Tables<'route_variants'>;
 type OperatorRecord = Tables<'operators'>;
 
 interface RoutePageProps {
@@ -144,6 +145,20 @@ export default async function RoutePage({ params }: RoutePageProps) {
 
   const attachmentsData = (attachments ?? []) as unknown as AttachmentRecord[];
 
+  const { data: variants } = await supabase
+    .from('route_variants')
+    .select('id, name, active')
+    .eq('route_id', route.id);
+
+  const routeVariantsData = (variants ?? []) as unknown as RouteVariantRecord[];
+  const activeVariants = routeVariantsData.filter((variant) => variant.active);
+  const splitBadgeLabel =
+    activeVariants.length === 1
+      ? `Split: ${activeVariants[0].name}`
+      : activeVariants.length > 1
+        ? `${activeVariants.length} route splits`
+        : null;
+
   let operators: OperatorRecord[] = [];
   if (route.operator_ids.length > 0) {
     const { data: operatorData } = await supabase
@@ -164,6 +179,9 @@ export default async function RoutePage({ params }: RoutePageProps) {
           <div>
             <h1 className="text-2xl font-semibold text-slate-900">{route.display_name}</h1>
             <div className="mt-1 flex flex-wrap gap-2">
+              {splitBadgeLabel && (
+                <Badge colorClassName="bg-violet-100 text-violet-700">{splitBadgeLabel}</Badge>
+              )}
               {(route.corridors ?? []).map((corridor: string) => (
                 <Badge key={corridor}>{corridor}</Badge>
               ))}
@@ -283,3 +301,4 @@ export default async function RoutePage({ params }: RoutePageProps) {
     </article>
   );
 }
+

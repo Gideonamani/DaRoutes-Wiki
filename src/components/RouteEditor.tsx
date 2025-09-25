@@ -16,6 +16,7 @@ import { MapEditor } from './MapEditor';
 import { StopPicker } from './StopPicker';
 import { FaresEditor } from './FaresEditor';
 import { Upload } from './Upload';
+import { RouteSplitBadgeDesigner } from './RouteSplitBadgeDesigner';
 import type { Tables } from '@/lib/types';
 import type { AttachmentDraft, RouteFormValues, StopFormValue } from './RouteEditor.types';
 
@@ -107,6 +108,22 @@ export function RouteEditor({
     mode: 'onBlur',
     defaultValues: formDefaults
   });
+
+  const [initialLeftName, initialRightName] = useMemo<[string, string]>(() => {
+    const source = formDefaults.display_name?.trim() ?? '';
+    if (!source) return ['Side A', 'Side B'];
+    const parts = source
+      .split(/[-/]/)
+      .map((segment) => segment.trim())
+      .filter(Boolean);
+    if (parts.length >= 2) {
+      return [parts[0], parts[1]];
+    }
+    if (parts.length === 1) {
+      return [parts[0], ''];
+    }
+    return ['Side A', 'Side B'];
+  }, [formDefaults.display_name]);
 
   const {
     control,
@@ -623,6 +640,19 @@ export function RouteEditor({
             append={fareFieldArray.append}
             remove={fareFieldArray.remove}
             stops={stops}
+          />
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-4">
+        <h2 className="text-lg font-semibold text-slate-900">Route split badge</h2>
+        <p className="text-sm text-slate-500">Craft the daladala split bar and export it as a PNG for signage or docs.</p>
+        <div className="mt-4">
+          <RouteSplitBadgeDesigner
+            key={route?.id ?? 'new'}
+            defaultLeftName={initialLeftName}
+            defaultRightName={initialRightName}
+            defaultViaText="via"
           />
         </div>
       </section>
