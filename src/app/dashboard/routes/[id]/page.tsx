@@ -137,6 +137,10 @@ export default async function RouteEditorPage({ params }: RouteEditorPageProps) 
   }));
 
   const { data: operators } = await supabase.from('operators').select('id,name').order('name');
+  const { data: terminals } = await supabase
+    .from('terminals')
+    .select('id,name,slug,status')
+    .order('name');
 
   return (
     <div className="space-y-6">
@@ -144,6 +148,7 @@ export default async function RouteEditorPage({ params }: RouteEditorPageProps) 
         mode="edit"
         route={routeRecord}
         operators={operators ?? []}
+        terminals={terminals ?? []}
         initialStops={initialStops}
         initialFares={initialFares}
         initialAttachments={initialAttachments}

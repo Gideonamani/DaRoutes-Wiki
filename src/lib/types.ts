@@ -33,36 +33,54 @@ export interface Database {
       stops: {
         Row: {
           id: string;
+          slug: string;
           name: string;
+          description: string | null;
           name_aliases: string[];
           lat: number;
           lng: number;
           geom: unknown | null;
           ward: string | null;
+          status: 'draft' | 'in_review' | 'published';
           created_by: string | null;
+          updated_by: string | null;
           created_at: string;
+          updated_at: string;
+          published_at: string | null;
         };
         Insert: {
           id?: string;
+          slug: string;
           name: string;
+          description?: string | null;
           name_aliases?: string[];
           lat: number;
           lng: number;
           geom?: unknown | null;
           ward?: string | null;
+          status?: 'draft' | 'in_review' | 'published';
           created_by?: string | null;
+          updated_by?: string | null;
           created_at?: string;
+          updated_at?: string;
+          published_at?: string | null;
         };
         Update: {
           id?: string;
+          slug?: string;
           name?: string;
+          description?: string | null;
           name_aliases?: string[];
           lat?: number;
           lng?: number;
           geom?: unknown | null;
           ward?: string | null;
+          status?: 'draft' | 'in_review' | 'published';
           created_by?: string | null;
+          updated_by?: string | null;
           created_at?: string;
+          updated_at?: string;
+          published_at?: string | null;
         };
         Relationships: [
           {
@@ -70,10 +88,85 @@ export interface Database {
             columns: ['created_by'];
             referencedRelation: 'users';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'stops_updated_by_fkey';
+            columns: ['updated_by'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
           }
         ];
       };
-      routes: {
+      
+terminals: {
+        Row: {
+          id: string;
+          slug: string;
+          name: string;
+          description: string | null;
+          lat: number | null;
+          lng: number | null;
+          geom: unknown | null;
+          ward: string | null;
+          amenities: Json;
+          status: 'draft' | 'in_review' | 'published';
+          created_by: string | null;
+          updated_by: string | null;
+          created_at: string;
+          updated_at: string;
+          published_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          slug: string;
+          name: string;
+          description?: string | null;
+          lat?: number | null;
+          lng?: number | null;
+          geom?: unknown | null;
+          ward?: string | null;
+          amenities?: Json;
+          status?: 'draft' | 'in_review' | 'published';
+          created_by?: string | null;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          published_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          slug?: string;
+          name?: string;
+          description?: string | null;
+          lat?: number | null;
+          lng?: number | null;
+          geom?: unknown | null;
+          ward?: string | null;
+          amenities?: Json;
+          status?: 'draft' | 'in_review' | 'published';
+          created_by?: string | null;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          published_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'terminals_created_by_fkey';
+            columns: ['created_by'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'terminals_updated_by_fkey';
+            columns: ['updated_by'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
+      
+routes: {
         Row: {
           id: string;
           slug: string;
@@ -81,15 +174,20 @@ export interface Database {
           color: string;
           start_stop_id: string | null;
           end_stop_id: string | null;
+          origin_terminal_id: string | null;
+          destination_terminal_id: string | null;
           corridors: string[];
           operator_ids: string[];
           est_buses: number | null;
           hours: string | null;
           notes: string | null;
-          is_published: boolean;
+          status: 'draft' | 'in_review' | 'published';
+          review_notes: string | null;
           created_by: string | null;
+          updated_by: string | null;
           created_at: string;
           updated_at: string;
+          published_at: string | null;
         };
         Insert: {
           id?: string;
@@ -98,15 +196,20 @@ export interface Database {
           color?: string;
           start_stop_id?: string | null;
           end_stop_id?: string | null;
+          origin_terminal_id?: string | null;
+          destination_terminal_id?: string | null;
           corridors?: string[];
           operator_ids?: string[];
           est_buses?: number | null;
           hours?: string | null;
           notes?: string | null;
-          is_published?: boolean;
+          status?: 'draft' | 'in_review' | 'published';
+          review_notes?: string | null;
           created_by?: string | null;
+          updated_by?: string | null;
           created_at?: string;
           updated_at?: string;
+          published_at?: string | null;
         };
         Update: {
           id?: string;
@@ -115,15 +218,20 @@ export interface Database {
           color?: string;
           start_stop_id?: string | null;
           end_stop_id?: string | null;
+          origin_terminal_id?: string | null;
+          destination_terminal_id?: string | null;
           corridors?: string[];
           operator_ids?: string[];
           est_buses?: number | null;
           hours?: string | null;
           notes?: string | null;
-          is_published?: boolean;
+          status?: 'draft' | 'in_review' | 'published';
+          review_notes?: string | null;
           created_by?: string | null;
+          updated_by?: string | null;
           created_at?: string;
           updated_at?: string;
+          published_at?: string | null;
         };
         Relationships: [
           {
@@ -133,9 +241,27 @@ export interface Database {
             referencedColumns: ['id'];
           },
           {
+            foreignKeyName: 'routes_updated_by_fkey';
+            columns: ['updated_by'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'routes_destination_terminal_id_fkey';
+            columns: ['destination_terminal_id'];
+            referencedRelation: 'terminals';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'routes_end_stop_id_fkey';
             columns: ['end_stop_id'];
             referencedRelation: 'stops';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'routes_origin_terminal_id_fkey';
+            columns: ['origin_terminal_id'];
+            referencedRelation: 'terminals';
             referencedColumns: ['id'];
           },
           {
@@ -146,7 +272,8 @@ export interface Database {
           }
         ];
       };
-      route_stops: {
+      
+route_stops: {
         Row: {
           route_id: string;
           stop_id: string;
@@ -177,7 +304,42 @@ export interface Database {
           }
         ];
       };
-      fares: {
+      route_terminals: {
+        Row: {
+          route_id: string;
+          terminal_id: string;
+          role: 'origin' | 'terminus' | 'through';
+          notes: string | null;
+        };
+        Insert: {
+          route_id: string;
+          terminal_id: string;
+          role: 'origin' | 'terminus' | 'through';
+          notes?: string | null;
+        };
+        Update: {
+          route_id?: string;
+          terminal_id?: string;
+          role?: 'origin' | 'terminus' | 'through';
+          notes?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'route_terminals_route_id_fkey';
+            columns: ['route_id'];
+            referencedRelation: 'routes';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'route_terminals_terminal_id_fkey';
+            columns: ['terminal_id'];
+            referencedRelation: 'terminals';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
+      
+fares: {
         Row: {
           id: string;
           route_id: string;
@@ -306,7 +468,89 @@ export interface Database {
           }
         ];
       };
-      audit_log: {
+      content_revisions: {
+        Row: {
+          id: number;
+          entity_type: 'route' | 'stop' | 'terminal';
+          entity_id: string;
+          version: number;
+          diff: Json;
+          summary: string | null;
+          actor: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          entity_type: 'route' | 'stop' | 'terminal';
+          entity_id: string;
+          version: number;
+          diff?: Json;
+          summary?: string | null;
+          actor?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          entity_type?: 'route' | 'stop' | 'terminal';
+          entity_id?: string;
+          version?: number;
+          diff?: Json;
+          summary?: string | null;
+          actor?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'content_revisions_actor_fkey';
+            columns: ['actor'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
+      
+      workflow_events: {
+        Row: {
+          id: number;
+          entity_type: 'route' | 'stop' | 'terminal';
+          entity_id: string;
+          from_status: string | null;
+          to_status: string;
+          note: string | null;
+          actor: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          entity_type: 'route' | 'stop' | 'terminal';
+          entity_id: string;
+          from_status?: string | null;
+          to_status: string;
+          note?: string | null;
+          actor?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          entity_type?: 'route' | 'stop' | 'terminal';
+          entity_id?: string;
+          from_status?: string | null;
+          to_status?: string;
+          note?: string | null;
+          actor?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'workflow_events_actor_fkey';
+            columns: ['actor'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
+      
+audit_log: {
         Row: {
           id: number;
           entity: string;

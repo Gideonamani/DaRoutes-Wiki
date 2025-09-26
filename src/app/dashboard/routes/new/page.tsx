@@ -33,6 +33,10 @@ export default async function NewRoutePage() {
     .from('operators')
     .select('id,name')
     .order('name');
+  const { data: terminals } = await supabase
+    .from('terminals')
+    .select('id,name,slug,status')
+    .order('name');
 
   return (
     <div className="space-y-6">
@@ -40,6 +44,7 @@ export default async function NewRoutePage() {
         mode="create"
         route={null}
         operators={operators ?? []}
+        terminals={terminals ?? []}
         initialStops={[]}
         initialFares={[]}
         initialAttachments={[]}

@@ -4,6 +4,18 @@ import { Suspense } from 'react';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
 import { Badge } from '@/components/Badge';
 
+const STATUS_LABELS: Record<'draft' | 'in_review' | 'published', string> = {
+  draft: 'Draft',
+  in_review: 'In review',
+  published: 'Published'
+};
+
+const STATUS_BADGE_CLASSES: Record<'draft' | 'in_review' | 'published', string> = {
+  draft: 'bg-slate-200 text-slate-600',
+  in_review: 'bg-amber-100 text-amber-700',
+  published: 'bg-emerald-100 text-emerald-700'
+};
+
 interface RoutesPageProps {
   searchParams?: { q?: string };
 }
@@ -40,7 +52,7 @@ async function RoutesTable({ query }: { query?: string }) {
 
   let request = supabase
     .from('routes')
-    .select('id, display_name, slug, color, is_published, updated_at, corridors')
+    .select('id, display_name, slug, color, status, updated_at, corridors')
     .order('updated_at', { ascending: false });
 
   if (query) {
@@ -73,10 +85,10 @@ async function RoutesTable({ query }: { query?: string }) {
             />
             <Badge
               colorClassName={
-                route.is_published ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
+                STATUS_BADGE_CLASSES[route.status as 'draft' | 'in_review' | 'published']
               }
             >
-              {route.is_published ? 'Published' : 'Draft'}
+              {STATUS_LABELS[route.status as 'draft' | 'in_review' | 'published']}
             </Badge>
           </div>
         </Link>

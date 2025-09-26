@@ -27,7 +27,10 @@ export type RouteFormValues = {
   est_buses: number | null;
   hours: string | null;
   notes: string | null;
-  is_published: boolean;
+  status: 'draft' | 'in_review' | 'published';
+  origin_terminal_id: string | null;
+  destination_terminal_id: string | null;
+  review_notes: string | null;
   stops: StopFormValue[];
   fares: FareFormValue[];
 };

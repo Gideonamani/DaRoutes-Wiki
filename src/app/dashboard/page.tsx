@@ -34,7 +34,7 @@ export default async function DashboardPage() {
 
   const [{ count: routeCount }, { count: publishedCount }, { count: stopCount }] = await Promise.all([
     supabase.from('routes').select('id', { count: 'exact', head: true }),
-    supabase.from('routes').select('id', { count: 'exact', head: true }).eq('is_published', true),
+    supabase.from('routes').select('id', { count: 'exact', head: true }).eq('status', 'published'),
     supabase.from('stops').select('id', { count: 'exact', head: true })
   ]);
 

@@ -20,6 +20,34 @@ import { RouteSplitBadgeDesigner } from './RouteSplitBadgeDesigner';
 import type { Tables } from '@/lib/types';
 import type { AttachmentDraft, RouteFormValues, StopFormValue } from './RouteEditor.types';
 
+const STATUS_OPTIONS = [
+  { value: 'draft' as const, label: 'Draft' },
+  { value: 'in_review' as const, label: 'In review' },
+  { value: 'published' as const, label: 'Published' }
+];
+
+const STATUS_LABELS: Record<'draft' | 'in_review' | 'published', string> = {
+  draft: 'Draft',
+  in_review: 'In review',
+  published: 'Published'
+};
+
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '') || 'stop';
+
+const generateStopSlug = (name: string) => {
+  const base = slugify(name);
+  const randomSegment =
+    typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function'
+      ? globalThis.crypto.randomUUID().slice(0, 8)
+      : Math.random().toString(36).slice(2, 10);
+  return ${base}-;
+};
+
 const StopSchema = z.object({
   id: z.string(),
   local_id: z.string().min(1),
@@ -51,7 +79,10 @@ const RouteSchema = z.object({
   est_buses: z.number().nullable(),
   hours: z.string().nullable(),
   notes: z.string().nullable(),
-  is_published: z.boolean(),
+  status: z.enum(['draft', 'in_review', 'published']),
+  origin_terminal_id: z.string().uuid().nullable(),
+  destination_terminal_id: z.string().uuid().nullable(),
+  review_notes: z.string().nullable(),
   stops: z.array(StopSchema).min(2, 'Need at least two stops'),
   fares: z.array(FareSchema)
 });
@@ -60,6 +91,7 @@ type RouteEditorProps = {
   mode: 'create' | 'edit';
   route: Tables<'routes'> | null;
   operators: Pick<Tables<'operators'>, 'id' | 'name'>[];
+  terminals: Pick<Tables<'terminals'>, 'id' | 'name' | 'slug' | 'status'>[];
   initialStops: StopFormValue[];
   initialFares: {
     id?: string;
@@ -76,6 +108,7 @@ export function RouteEditor({
   mode,
   route,
   operators,
+  terminals,
   initialStops,
   initialFares,
   initialAttachments
@@ -96,11 +129,19 @@ export function RouteEditor({
       est_buses: route?.est_buses ?? null,
       hours: route?.hours ?? null,
       notes: route?.notes ?? null,
-      is_published: route?.is_published ?? false,
+      status: (route?.status as RouteFormValues['status']) ?? 'draft',
+      origin_terminal_id: route?.origin_terminal_id ?? null,
+      destination_terminal_id: route?.destination_terminal_id ?? null,
+      review_notes: route?.review_notes ?? null,
       stops: initialStops,
       fares: initialFares
     }),
     [initialFares, initialStops, route]
+  );
+
+  const terminalOptions = useMemo(
+    () => [...terminals].sort((a, b) => a.name.localeCompare(b.name)),
+    [terminals]
   );
 
   const formMethods = useForm<RouteFormValues>({
@@ -217,12 +258,7 @@ export function RouteEditor({
 
   const selectedColor = watch('color');
   const colorIsReadable = isReadableOn(selectedColor, '#ffffff');
-
-  const handleTogglePublish = () => {
-    setValue('is_published', !getValues('is_published'));
-  };
-
-  const publishLabel = getValues('is_published') ? 'Unpublish' : 'Publish';
+  const statusValue = watch('status');
 
   const onSubmit: SubmitHandler<RouteFormValues> = async (values) => {
     setStatusMessage(null);
@@ -235,11 +271,14 @@ export function RouteEditor({
         .from('stops')
         .insert(
           newStops.map((stop) => ({
+            slug: generateStopSlug(stop.name),
             name: stop.name,
+            description: null,
             lat: stop.lat,
             lng: stop.lng,
             ward: stop.ward,
-            name_aliases: stop.name_aliases
+            name_aliases: stop.name_aliases,
+            status: 'draft'
           }))
         )
         .select('id,name');
@@ -270,6 +309,9 @@ export function RouteEditor({
 
     const startStopId = orderedStops[0]?.stop_id ?? null;
     const endStopId = orderedStops[orderedStops.length - 1]?.stop_id ?? null;
+    const originTerminalId = values.origin_terminal_id && values.origin_terminal_id.length > 0 ? values.origin_terminal_id : null;
+    const destinationTerminalId = values.destination_terminal_id && values.destination_terminal_id.length > 0 ? values.destination_terminal_id : null;
+    const reviewNotes = values.review_notes?.trim() ? values.review_notes.trim() : null;
 
     const payload = {
       display_name: values.display_name,
@@ -280,7 +322,10 @@ export function RouteEditor({
       est_buses: values.est_buses,
       hours: values.hours,
       notes: values.notes,
-      is_published: values.is_published,
+      status: values.status,
+      origin_terminal_id: originTerminalId,
+      destination_terminal_id: destinationTerminalId,
+      review_notes: reviewNotes,
       start_stop_id: startStopId,
       end_stop_id: endStopId
     };
@@ -321,6 +366,29 @@ export function RouteEditor({
       const { error } = await supabase.from('route_stops').insert(routeStopsPayload);
       if (error) {
         setStatusMessage(`Failed to sync route stops: ${error.message}`);
+        return;
+      }
+    }
+
+    await supabase
+      .from('route_terminals')
+      .delete()
+      .eq('route_id', routeId)
+      .in('role', ['origin', 'terminus']);
+
+    const terminalLinks = [
+      originTerminalId
+        ? { route_id: routeId!, terminal_id: originTerminalId, role: 'origin' as const, notes: null }
+        : null,
+      destinationTerminalId
+        ? { route_id: routeId!, terminal_id: destinationTerminalId, role: 'terminus' as const, notes: null }
+        : null
+    ].filter((entry): entry is { route_id: string; terminal_id: string; role: 'origin' | 'terminus'; notes: string | null } => Boolean(entry));
+
+    if (terminalLinks.length) {
+      const { error } = await supabase.from('route_terminals').insert(terminalLinks);
+      if (error) {
+        setStatusMessage(Failed to sync terminals: );
         return;
       }
     }
@@ -476,6 +544,49 @@ export function RouteEditor({
             </select>
           </label>
           <label className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+            Service status
+            <select
+              {...register('status')}
+              className="mt-1 block w-full rounded-md border-slate-300 text-sm focus:border-brand focus:ring-brand"
+            >
+              {STATUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+            Origin terminal
+            <select
+              {...register('origin_terminal_id')}
+              className="mt-1 block w-full rounded-md border-slate-300 text-sm focus:border-brand focus:ring-brand"
+            >
+              <option value="">Select terminal</option>
+              {terminalOptions.map((terminal) => (
+                <option key={terminal.id} value={terminal.id}>
+                  {terminal.name}
+                  {terminal.status != 'published' ?  () : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+            Destination terminal
+            <select
+              {...register('destination_terminal_id')}
+              className="mt-1 block w-full rounded-md border-slate-300 text-sm focus:border-brand focus:ring-brand"
+            >
+              <option value="">Select terminal</option>
+              {terminalOptions.map((terminal) => (
+                <option key={terminal.id} value={terminal.id}>
+                  {terminal.name}
+                  {terminal.status != 'published' ?  () : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs font-semibold uppercase tracking-wide text-slate-600">
             Estimated buses
             <input
               type="number"
@@ -490,7 +601,7 @@ export function RouteEditor({
               type="text"
               {...register('hours')}
               className="mt-1 block w-full rounded-md border-slate-300 text-sm focus:border-brand focus:ring-brand"
-              placeholder="05:30 – 22:00"
+              placeholder="05:30 - 22:00"
             />
           </label>
           <label className="md:col-span-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
@@ -502,26 +613,23 @@ export function RouteEditor({
               placeholder="Operational notes or service advisories"
             />
           </label>
+          <label className="md:col-span-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
+            Review notes (internal)
+            <textarea
+              rows={3}
+              {...register('review_notes')}
+              className="mt-1 block w-full rounded-md border-slate-300 text-sm focus:border-brand focus:ring-brand"
+              placeholder="Context for collaborators or reviewers"
+            />
+          </label>
         </div>
-        <div className="mt-6 flex items-center justify-between rounded border border-slate-200 bg-slate-50 px-4 py-3">
-          <div>
-            <p className="text-sm font-semibold text-slate-700">
-              Publish status: {watch('is_published') ? 'Published' : 'Draft'}
-            </p>
-            <p className="text-xs text-slate-500">
-              Published routes appear on the public wiki and JSON API.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={handleTogglePublish}
-            className="rounded bg-brand-dark px-4 py-1.5 text-sm font-semibold text-white"
-          >
-            {publishLabel}
-          </button>
-        </div>
-      </section>
-
+        <p className="mt-2 text-xs text-slate-500">
+          {statusValue === 'published'
+            ? 'Published routes appear on the public wiki and JSON API.'
+            : statusValue === 'in_review'
+            ? 'In review routes are shared with contributors before publication.'
+            : 'Draft routes remain private to logged-in contributors.'}
+        </p>
       <section className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-4">
           <MapEditor stops={stops} color={selectedColor} onMapAdd={handleMapAdd} />

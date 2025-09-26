@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: RoutePageProps): Promise<Meta
     .from('routes')
     .select('display_name, corridors, est_buses, hours, notes')
     .eq('slug', params.slug)
-    .eq('is_published', true)
+    .eq('status', 'published')
     .maybeSingle();
 
   if (!routeData) {
@@ -100,7 +100,7 @@ export default async function RoutePage({ params }: RoutePageProps) {
     .from('routes')
     .select('id, slug, display_name, color, corridors, est_buses, hours, notes, operator_ids')
     .eq('slug', params.slug)
-    .eq('is_published', true)
+    .eq('status', 'published')
     .maybeSingle();
 
   if (!routeData) {

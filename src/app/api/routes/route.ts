@@ -28,7 +28,7 @@ export async function GET() {
       end_stop:stops!routes_end_stop_id_fkey (name)
     `
     )
-    .eq('is_published', true)
+    .eq('status', 'published')
     .order('display_name');
 
   if (error) {

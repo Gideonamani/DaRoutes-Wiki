@@ -43,7 +43,7 @@ export default async function RouteOgImage({ params }: { params: { slug: string 
     .from('routes')
     .select('display_name, color, corridors, est_buses, hours')
     .eq('slug', params.slug)
-    .eq('is_published', true)
+    .eq('status', 'published')
     .maybeSingle();
 
   if (!routeData) {

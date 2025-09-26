@@ -31,11 +31,14 @@ export async function GET(_: Request, { params }: Params) {
       est_buses,
       hours,
       notes,
+      status,
+      origin_terminal_id,
+      destination_terminal_id,
       updated_at
     `
     )
     .eq('slug', params.slug)
-    .eq('is_published', true)
+    .eq('status', 'published')
     .maybeSingle();
 
   if (error) {
@@ -106,6 +109,9 @@ export async function GET(_: Request, { params }: Params) {
       est_buses: route.est_buses,
       hours: route.hours,
       notes: route.notes,
+      status: route.status,
+      origin_terminal_id: route.origin_terminal_id,
+      destination_terminal_id: route.destination_terminal_id,
       updated_at: route.updated_at,
       operators
     },
