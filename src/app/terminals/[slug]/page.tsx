@@ -5,8 +5,22 @@ import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
 import type { Tables } from '@/lib/types';
+import { WORKFLOW_STATUS_LABELS } from '@/lib/workflowStatus';
 
-type TerminalRecord = Tables<'terminals'> & {
+type TerminalRecord = Pick<
+  Tables<'terminals'>,
+  'id' |
+    'slug' |
+    'name' |
+    'description' |
+    'ward' |
+    'status' |
+    'amenities' |
+    'lat' |
+    'lng' |
+    'created_at' |
+    'updated_at'
+> & {
   route_links?: {
     role: 'origin' | 'terminus' | 'through';
     route?: Pick<Tables<'routes'>, 'id' | 'slug' | 'display_name' | 'status' | 'color'> | null;
@@ -16,12 +30,6 @@ type TerminalRecord = Tables<'terminals'> & {
 interface TerminalPageProps {
   params: { slug: string };
 }
-
-const STATUS_LABELS: Record<'draft' | 'in_review' | 'published', string> = {
-  draft: 'Draft',
-  in_review: 'In review',
-  published: 'Published'
-};
 
 export async function generateMetadata({ params }: TerminalPageProps): Promise<Metadata> {
   const supabase = getSupabaseServerClient();
@@ -39,8 +47,8 @@ export async function generateMetadata({ params }: TerminalPageProps): Promise<M
   }
 
   const terminal = data as Pick<TerminalRecord, 'name' | 'description' | 'status'>;
-  const title = ${terminal.name} - DaRoutes Wiki;
-  const description = terminal.description ?? Details and linked routes for .;
+  const title = `${terminal.name} - DaRoutes Wiki`;
+  const description = terminal.description ?? `Details and linked routes for ${terminal.name}.`;
 
   return {
     title,
@@ -48,7 +56,7 @@ export async function generateMetadata({ params }: TerminalPageProps): Promise<M
     openGraph: {
       title,
       description,
-      url: /terminals/,
+      url: `/terminals/${params.slug}`,
       type: 'article'
     },
     twitter: {
@@ -64,7 +72,7 @@ export default async function TerminalPage({ params }: TerminalPageProps) {
   const { data, error } = await supabase
     .from('terminals')
     .select(
-      
+      `
       id,
       slug,
       name,
@@ -77,7 +85,7 @@ export default async function TerminalPage({ params }: TerminalPageProps) {
       created_at,
       updated_at,
       route_links:route_terminals (role, route:routes (id, slug, display_name, status, color))
-    
+    `
     )
     .eq('slug', params.slug)
     .maybeSingle();
@@ -85,7 +93,7 @@ export default async function TerminalPage({ params }: TerminalPageProps) {
   if (error) throw error;
   if (!data) notFound();
 
-  const terminal = data as TerminalRecord;
+  const terminal = data as unknown as TerminalRecord;
   const amenities = Array.isArray(terminal.amenities)
     ? (terminal.amenities as string[])
     : [];
@@ -112,7 +120,7 @@ export default async function TerminalPage({ params }: TerminalPageProps) {
       <Card className="space-y-4 p-6">
         {!isPublished && (
           <p className="rounded-md bg-amber-100 px-3 py-2 text-xs font-semibold uppercase text-amber-700">
-            {STATUS_LABELS[terminal.status]} terminal - visible to contributors only
+            {WORKFLOW_STATUS_LABELS[terminal.status]} terminal - visible to contributors only
           </p>
         )}
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -138,9 +146,7 @@ export default async function TerminalPage({ params }: TerminalPageProps) {
 
       <section className="grid gap-6 lg:grid-cols-3">
         <Card className="space-y-3 p-5">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">
-            Location
-          </h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">Location</h2>
           {terminal.lat && terminal.lng ? (
             <div className="space-y-1 text-sm text-slate-700">
               <p>
@@ -157,9 +163,7 @@ export default async function TerminalPage({ params }: TerminalPageProps) {
         </Card>
 
         <Card className="space-y-3 p-5 lg:col-span-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">
-            Linked routes
-          </h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">Linked routes</h2>
           <div className="grid gap-4 md:grid-cols-3">
             {(['origin', 'terminus', 'through'] as const).map((role) => (
               <div key={role}>
@@ -167,20 +171,25 @@ export default async function TerminalPage({ params }: TerminalPageProps) {
                   {role === 'through' ? 'Pass-through' : role === 'origin' ? 'Origin' : 'Terminus'}
                 </h3>
                 <ul className="mt-2 space-y-2 text-sm">
-                  {routesByRole[role].map((link) => (
-                    <li key={link.route?.id}>
-                      <Link
-                        href={/route/}
-                        className="flex items-center gap-2 text-brand-dark hover:underline"
-                      >
-                        <span
-                          className="inline-block h-2 w-2 rounded-full"
-                          style={{ backgroundColor: link.route?.color ?? '#1e293b' }}
-                        />
-                        {link.route?.display_name}
-                      </Link>
-                    </li>
-                  ))}
+                  {routesByRole[role].map((link) => {
+                    const route = link.route;
+                    if (!route) return null;
+                    return (
+                      <li key={route.id}>
+                        <Link
+                          href={{ pathname: '/route/[slug]', query: { slug: route.slug } }}
+                          className="flex items-center gap-2 text-brand-dark hover:underline"
+                        >
+                          <span
+                            className="inline-block h-2 w-2 rounded-full"
+                            style={{ backgroundColor: route.color ?? '#1e293b' }}
+                          />
+                          {route.display_name}
+                          <span className="text-xs uppercase text-slate-400">{link.role}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
                   {!routesByRole[role].length && (
                     <li className="text-xs text-slate-500">No routes linked.</li>
                   )}

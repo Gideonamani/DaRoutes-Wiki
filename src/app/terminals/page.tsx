@@ -5,7 +5,17 @@ import { Badge } from '@/components/Badge';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
 import type { Tables } from '@/lib/types';
 
-type TerminalRecord = Tables<'terminals'> & {
+type TerminalRecord = Pick<
+  Tables<'terminals'>,
+  'id' |
+    'slug' |
+    'name' |
+    'description' |
+    'ward' |
+    'status' |
+    'amenities' |
+    'updated_at'
+> & {
   route_links?: {
     role: 'origin' | 'terminus' | 'through';
     route?: Pick<Tables<'routes'>, 'id' | 'slug' | 'display_name' | 'status' | 'color'> | null;
@@ -35,7 +45,7 @@ export default async function TerminalsPage() {
   const { data, error } = await supabase
     .from('terminals')
     .select(
-      
+      `
       id,
       slug,
       name,
@@ -45,7 +55,7 @@ export default async function TerminalsPage() {
       amenities,
       updated_at,
       route_links:route_terminals (role, route:routes (id, slug, display_name, status, color))
-    
+    `
     )
     .eq('status', 'published')
     .order('name');
@@ -76,7 +86,7 @@ export default async function TerminalsPage() {
             <Card key={terminal.id} className="flex h-full flex-col justify-between p-5">
               <div>
                 <Link
-                  href={/terminals/}
+                  href={{ pathname: '/terminals/[slug]', query: { slug: terminal.slug } }}
                   className="text-lg font-semibold text-slate-900"
                 >
                   {terminal.name}
@@ -85,9 +95,7 @@ export default async function TerminalsPage() {
                   {terminal.ward ?? 'Ward pending'}
                 </p>
                 {terminal.description && (
-                  <p className="mt-2 text-sm text-slate-600">
-                    {terminal.description}
-                  </p>
+                  <p className="mt-2 text-sm text-slate-600">{terminal.description}</p>
                 )}
               </div>
 
@@ -106,20 +114,24 @@ export default async function TerminalsPage() {
                   )}
                 </div>
                 <div className="space-y-1">
-                  {linkedRoutes.slice(0, 3).map((link) => (
-                    <Link
-                      key={link.route?.id}
-                      href={/route/}
-                      className="flex items-center gap-2 text-sm text-brand-dark hover:underline"
-                    >
-                      <span
-                        className="inline-block h-2 w-2 rounded-full"
-                        style={{ backgroundColor: link.route?.color ?? '#1e293b' }}
-                      />
-                      {link.route?.display_name}
-                      <span className="text-xs uppercase text-slate-400">{link.role}</span>
-                    </Link>
-                  ))}
+                  {linkedRoutes.slice(0, 3).map((link) => {
+                    const route = link.route;
+                    if (!route) return null;
+                    return (
+                      <Link
+                        key={route.id}
+                        href={{ pathname: '/route/[slug]', query: { slug: route.slug } }}
+                        className="flex items-center gap-2 text-sm text-brand-dark hover:underline"
+                      >
+                        <span
+                          className="inline-block h-2 w-2 rounded-full"
+                          style={{ backgroundColor: route.color ?? '#1e293b' }}
+                        />
+                        {route.display_name}
+                        <span className="text-xs uppercase text-slate-400">{link.role}</span>
+                      </Link>
+                    );
+                  })}
                   {linkedRoutes.length > 3 && (
                     <p className="text-xs text-slate-500">+{linkedRoutes.length - 3} more routes</p>
                   )}

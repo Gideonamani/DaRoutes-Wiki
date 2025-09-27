@@ -5,8 +5,12 @@ import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
 import type { Tables } from '@/lib/types';
+import { WORKFLOW_STATUS_LABELS } from '@/lib/workflowStatus';
 
-type StopRecord = Tables<'stops'> & {
+type StopRecord = Pick<
+  Tables<'stops'>,
+  'id' | 'slug' | 'name' | 'ward' | 'status' | 'name_aliases' | 'lat' | 'lng' | 'created_at' | 'updated_at'
+> & {
   route_links?: {
     seq: number;
     route?: Pick<Tables<'routes'>, 'id' | 'slug' | 'display_name' | 'status' | 'color'> | null;
@@ -16,12 +20,6 @@ type StopRecord = Tables<'stops'> & {
 interface StopPageProps {
   params: { slug: string };
 }
-
-const STATUS_LABELS: Record<'draft' | 'in_review' | 'published', string> = {
-  draft: 'Draft',
-  in_review: 'In review',
-  published: 'Published'
-};
 
 export async function generateMetadata({ params }: StopPageProps): Promise<Metadata> {
   const supabase = getSupabaseServerClient();
@@ -39,10 +37,10 @@ export async function generateMetadata({ params }: StopPageProps): Promise<Metad
   }
 
   const stop = data as Pick<StopRecord, 'name' | 'ward' | 'status'>;
-  const title = ${stop.name} stop - DaRoutes Wiki;
+  const title = `${stop.name} stop - DaRoutes Wiki`;
   const description = stop.ward
-    ? Routes and details for  in .
-    : Routes and details for .;
+    ? `Routes and details for ${stop.name} in ${stop.ward}.`
+    : `Routes and details for ${stop.name}.`;
 
   return {
     title,
@@ -50,7 +48,7 @@ export async function generateMetadata({ params }: StopPageProps): Promise<Metad
     openGraph: {
       title,
       description,
-      url: /stops/,
+      url: `/stops/${params.slug}`,
       type: 'article'
     },
     twitter: {
@@ -66,7 +64,7 @@ export default async function StopPage({ params }: StopPageProps) {
   const { data, error } = await supabase
     .from('stops')
     .select(
-      
+      `
       id,
       slug,
       name,
@@ -78,7 +76,7 @@ export default async function StopPage({ params }: StopPageProps) {
       created_at,
       updated_at,
       route_links:route_stops (seq, route:routes (id, slug, display_name, status, color))
-    
+    `
     )
     .eq('slug', params.slug)
     .maybeSingle();
@@ -86,7 +84,7 @@ export default async function StopPage({ params }: StopPageProps) {
   if (error) throw error;
   if (!data) notFound();
 
-  const stop = data as StopRecord;
+  const stop = data as unknown as StopRecord;
   const isPublished = stop.status === 'published';
   const aliases = stop.name_aliases ?? [];
   const linkedRoutes = (stop.route_links ?? []).filter(
@@ -102,7 +100,7 @@ export default async function StopPage({ params }: StopPageProps) {
       <Card className="space-y-4 p-6">
         {!isPublished && (
           <p className="rounded-md bg-amber-100 px-3 py-2 text-xs font-semibold uppercase text-amber-700">
-            {STATUS_LABELS[stop.status]} stop - visible to contributors only
+            {WORKFLOW_STATUS_LABELS[stop.status]} stop - visible to contributors only
           </p>
         )}
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -126,9 +124,7 @@ export default async function StopPage({ params }: StopPageProps) {
 
       <section className="grid gap-6 lg:grid-cols-3">
         <Card className="space-y-3 p-5">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">
-            Coordinates
-          </h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">Coordinates</h2>
           {stop.lat && stop.lng ? (
             <div className="space-y-1 text-sm text-slate-700">
               <p>
@@ -145,22 +141,27 @@ export default async function StopPage({ params }: StopPageProps) {
         </Card>
 
         <Card className="space-y-3 p-5 lg:col-span-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">
-            Published routes
-          </h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">Published routes</h2>
           <ul className="space-y-2 text-sm">
-            {linkedRoutes.map((link) => (
-              <li key={${link.route?.id}-} className="flex items-center gap-3">
-                <span
-                  className="inline-block h-2 w-2 rounded-full"
-                  style={{ backgroundColor: link.route?.color ?? '#1e293b' }}
-                />
-                <Link href={/route/} className="text-brand-dark hover:underline">
-                  {link.route?.display_name}
-                </Link>
-                <span className="text-xs text-slate-500">Stop #{link.seq}</span>
-              </li>
-            ))}
+            {linkedRoutes.map((link) => {
+              const route = link.route;
+              if (!route) return null;
+              return (
+                <li key={route.id} className="flex items-center gap-3">
+                  <span
+                    className="inline-block h-2 w-2 rounded-full"
+                    style={{ backgroundColor: route.color ?? '#1e293b' }}
+                  />
+                  <Link
+                    href={{ pathname: '/route/[slug]', query: { slug: route.slug } }}
+                    className="text-brand-dark hover:underline"
+                  >
+                    {route.display_name}
+                  </Link>
+                  <span className="text-xs text-slate-500">Stop #{link.seq}</span>
+                </li>
+              );
+            })}
             {!linkedRoutes.length && (
               <li className="text-xs text-slate-500">No published routes linked yet.</li>
             )}

@@ -5,7 +5,10 @@ import { Badge } from '@/components/Badge';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
 import type { Tables } from '@/lib/types';
 
-type StopRecord = Tables<'stops'> & {
+type StopRecord = Pick<
+  Tables<'stops'>,
+  'id' | 'slug' | 'name' | 'ward' | 'status' | 'name_aliases' | 'lat' | 'lng' | 'updated_at'
+> & {
   route_links?: {
     seq: number;
     route?: Pick<Tables<'routes'>, 'id' | 'slug' | 'display_name' | 'status' | 'color'> | null;
@@ -35,7 +38,7 @@ export default async function StopsPage() {
   const { data, error } = await supabase
     .from('stops')
     .select(
-      
+      `
       id,
       slug,
       name,
@@ -46,7 +49,7 @@ export default async function StopsPage() {
       lng,
       updated_at,
       route_links:route_stops (seq, route:routes (id, slug, display_name, status, color))
-    
+    `
     )
     .eq('status', 'published')
     .order('name');
@@ -72,7 +75,10 @@ export default async function StopsPage() {
           return (
             <Card key={stop.id} className="flex h-full flex-col justify-between p-5">
               <div>
-                <Link href={/stops/} className="text-lg font-semibold text-slate-900">
+                <Link
+                  href={{ pathname: '/stops/[slug]', query: { slug: stop.slug } }}
+                  className="text-lg font-semibold text-slate-900"
+                >
                   {stop.name}
                 </Link>
                 <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">
@@ -100,18 +106,25 @@ export default async function StopsPage() {
                   </Badge>
                 </div>
                 <ul className="space-y-1 text-sm">
-                  {linkedRoutes.slice(0, 4).map((link) => (
-                    <li key={${link.route?.id}-} className="flex items-center gap-2">
-                      <span
-                        className="inline-block h-2 w-2 rounded-full"
-                        style={{ backgroundColor: link.route?.color ?? '#1e293b' }}
-                      />
-                      <Link href={/route/} className="text-brand-dark hover:underline">
-                        {link.route?.display_name}
-                      </Link>
-                      <span className="text-xs text-slate-400">Stop #{link.seq}</span>
-                    </li>
-                  ))}
+                  {linkedRoutes.slice(0, 4).map((link) => {
+                    const route = link.route;
+                    if (!route) return null;
+                    return (
+                      <li key={route.id} className="flex items-center gap-2">
+                        <span
+                          className="inline-block h-2 w-2 rounded-full"
+                          style={{ backgroundColor: route.color ?? '#1e293b' }}
+                        />
+                        <Link
+                          href={{ pathname: '/route/[slug]', query: { slug: route.slug } }}
+                          className="text-brand-dark hover:underline"
+                        >
+                          {route.display_name}
+                        </Link>
+                        <span className="text-xs text-slate-400">Stop #{link.seq}</span>
+                      </li>
+                    );
+                  })}
                   {linkedRoutes.length > 4 && (
                     <li className="text-xs text-slate-500">+{linkedRoutes.length - 4} more routes</li>
                   )}

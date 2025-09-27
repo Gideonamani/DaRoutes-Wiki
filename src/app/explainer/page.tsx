@@ -57,7 +57,10 @@ export default function ExplainerPage() {
           <Link href="/dashboard/routes/new" className="rounded bg-brand-dark px-4 py-2 font-semibold text-white">
             Become an editor
           </Link>
-          <Link href="/terminals" className="rounded border border-slate-200 px-4 py-2 font-semibold text-slate-700">
+          <Link
+            href={{ pathname: '/terminals' }}
+            className="rounded border border-slate-200 px-4 py-2 font-semibold text-slate-700"
+          >
             Browse terminals
           </Link>
         </div>
