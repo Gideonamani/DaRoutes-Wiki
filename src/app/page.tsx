@@ -1,10 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Bus, Clock, CreditCard } from 'lucide-react';
 import { Card } from '@/components/Card';
 import { Badge } from '@/components/Badge';
+import { MapPreview } from '@/components/MapPreview';
+import { HomepageClient } from '@/components/HomepageClient';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
 import type { Tables } from '@/lib/types';
-import { WORKFLOW_STATUS_LABELS, type WorkflowStatus } from '@/lib/workflowStatus';
+import { PALETTE } from '@/lib/designTokens';
 
 type RouteSummaryRecord = Tables<'routes'> & {
   start_stop?: { name?: string | null } | null;
@@ -12,12 +15,6 @@ type RouteSummaryRecord = Tables<'routes'> & {
 };
 
 const description = 'Discover Dar es Salaam bus and BRT routes curated by local operators and volunteers.';
-
-const STATUS_BADGE_CLASSES: Record<WorkflowStatus, string> = {
-  draft: 'bg-slate-200 text-slate-600',
-  in_review: 'bg-amber-100 text-amber-700',
-  published: 'bg-emerald-100 text-emerald-700'
-};
 
 export const metadata: Metadata = {
   title: 'DaRoutes Wiki',
@@ -43,18 +40,6 @@ export const metadata: Metadata = {
     images: ['/opengraph-image']
   }
 };
-
-function formatUpdated(value: string | null) {
-  if (!value) return 'Pending review';
-  try {
-    return new Intl.DateTimeFormat('en-GB', {
-      dateStyle: 'medium',
-      timeStyle: 'short'
-    }).format(new Date(value));
-  } catch (error) {
-    return value;
-  }
-}
 
 export default async function HomePage() {
   const supabase = getSupabaseServerClient();
@@ -83,142 +68,137 @@ export default async function HomePage() {
 
   const publishedRoutes = (publishedData ?? []) as unknown as RouteSummaryRecord[];
 
-  let inProgressRoutes: RouteSummaryRecord[] = [];
-  if (session) {
-    const { data: draftData } = await supabase
-      .from('routes')
-      .select(
-        `
-        id,
-        slug,
-        display_name,
-        color,
-        corridors,
-        est_buses,
-        hours,
-        status,
-        updated_at
-      `
-      )
-      .neq('status', 'published')
-      .order('updated_at', { ascending: false })
-      .limit(12);
-
-    inProgressRoutes = (draftData ?? []) as unknown as RouteSummaryRecord[];
-  }
-
   return (
-    <div className="space-y-8">
-      <section className="rounded-lg bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-semibold text-slate-900">DaRoutes Wiki</h1>
-        <p className="mt-2 text-sm text-slate-600">{description}</p>
+    <HomepageClient>
+      {/* Hero Section */}
+      <section className="rounded-lg bg-white p-6 shadow-sm mx-4 md:mx-6">
+        <h1 className="text-2xl font-semibold" style={{ color: PALETTE.text }}>
+          DaRoutes Wiki
+        </h1>
+        <p className="mt-2 text-sm" style={{ color: PALETTE.textMuted }}>
+          {description}
+        </p>
       </section>
 
-      <section className="space-y-4">
-        <header className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">Published routes</h2>
-          <Link href={{ pathname: '/dashboard/routes' }} className="text-sm font-semibold text-brand-dark">
-            Manage routes
-          </Link>
+      {/* Published Routes Grid */}
+      <section className="px-4 md:px-6 mt-6">
+        <header className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold" style={{ color: PALETTE.text }}>
+            Published routes
+          </h2>
+          {session && (
+            <Link
+              href="/dashboard/routes"
+              className="text-sm font-semibold hover:underline"
+              style={{ color: PALETTE.primary }}
+            >
+              Manage routes
+            </Link>
+          )}
         </header>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {publishedRoutes.map((route) => (
-            <Card key={route.id} className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Link
-                    href={{ pathname: '/route/[slug]', query: { slug: route.slug } }}
-                    className="text-lg font-semibold text-slate-900"
-                  >
-                    {route.display_name}
-                  </Link>
-                  <p className="text-xs text-slate-500">
-                    {route.start_stop?.name ?? 'TBD'} - {route.end_stop?.name ?? 'TBD'}
-                  </p>
+            <Card
+              key={route.id}
+              className="hover:shadow-md transition-shadow cursor-pointer border border-gray-100"
+            >
+              <Link href={`/route/${route.slug}`}>
+                <div className="flex items-center justify-between p-4 border-b">
+                  <div>
+                    <h2 className="font-semibold text-lg" style={{ color: PALETTE.text }}>
+                      {route.display_name}
+                    </h2>
+                    <p className="text-sm" style={{ color: PALETTE.textMuted }}>
+                      {route.start_stop?.name ?? 'TBD'} - {route.end_stop?.name ?? 'TBD'}
+                    </p>
+                  </div>
+                  <div className="flex gap-1">
+                    <div
+                      className="h-4 w-4 rounded-sm"
+                      style={{ backgroundColor: route.color }}
+                    />
+                    <div
+                      className="h-4 w-4 rounded-sm"
+                      style={{ backgroundColor: PALETTE.success }}
+                    />
+                  </div>
                 </div>
-                <span
-                  className="h-8 w-8 rounded-full border border-slate-200"
-                  style={{ backgroundColor: route.color }}
-                />
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {(route.corridors ?? []).map((corridor: string) => (
-                  <Badge key={corridor}>{corridor}</Badge>
-                ))}
-                {route.est_buses && (
-                  <Badge colorClassName="bg-emerald-100 text-emerald-800">
-                    {route.est_buses} buses
-                  </Badge>
-                )}
-                {route.hours && <Badge colorClassName="bg-slate-200 text-slate-700">{route.hours}</Badge>}
-              </div>
+                <div className="p-4 flex flex-col gap-2">
+                  {/* Map Preview */}
+                  <div className="overflow-hidden rounded-md">
+                    <MapPreview color={route.color} secondary={PALETTE.success} />
+                  </div>
+                  {/* Route metadata */}
+                  <div className="flex justify-between text-sm mt-2" style={{ color: PALETTE.textMuted }}>
+                    <span className="flex items-center gap-1">
+                      <Bus size={14} /> Route
+                    </span>
+                    {route.hours && (
+                      <span className="flex items-center gap-1">
+                        <Clock size={14} /> {route.hours}
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1">
+                      <CreditCard size={14} /> TZS
+                    </span>
+                  </div>
+                  {/* Badges */}
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {(route.corridors ?? []).map((corridor: string) => (
+                      <Badge key={corridor}>{corridor}</Badge>
+                    ))}
+                    {route.est_buses && (
+                      <Badge colorClassName="bg-emerald-100 text-emerald-800">
+                        {route.est_buses} buses
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </Link>
             </Card>
           ))}
           {!publishedRoutes.length && (
-            <Card className="p-6 text-sm text-slate-500">
+            <Card className="p-6 text-sm text-slate-500 col-span-full">
               No routes published yet. Head to the dashboard to create one.
             </Card>
           )}
         </div>
       </section>
 
-      {session && inProgressRoutes.length > 0 && (
-        <section className="space-y-4">
-          <header className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-900">Routes in progress</h2>
-            <Link href={{ pathname: '/dashboard/routes' }} className="text-sm font-semibold text-brand-dark">
-              Open dashboard
-            </Link>
-          </header>
-          <div className="grid gap-4 md:grid-cols-2">
-            {inProgressRoutes.map((route) => (
-              <Card key={route.id} className="flex flex-col justify-between p-4">
-                <div>
-                  <Link
-                    href={{ pathname: '/dashboard/routes/[id]', query: { id: route.id } }}
-                    className="text-lg font-semibold text-slate-900"
-                  >
-                    {route.display_name}
-                  </Link>
-                  <p className="mt-1 text-xs text-slate-500">Updated {formatUpdated(route.updated_at ?? null)}</p>
-                </div>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <Badge colorClassName={STATUS_BADGE_CLASSES[route.status as WorkflowStatus]}>
-                    {WORKFLOW_STATUS_LABELS[route.status as WorkflowStatus]}
-                  </Badge>
-                  {(route.corridors ?? []).map((corridor: string) => (
-                    <Badge key={corridor}>{corridor}</Badge>
-                  ))}
-                </div>
-              </Card>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="grid gap-4 md:grid-cols-2">
+      {/* Info Cards */}
+      <section className="grid gap-4 md:grid-cols-2 px-4 md:px-6 mt-8">
         <Card className="p-5">
-          <h2 className="text-lg font-semibold text-slate-900">Terminals directory</h2>
-          <p className="mt-2 text-sm text-slate-600">See where routes begin and end, plus amenities for riders.</p>
+          <h2 className="text-lg font-semibold" style={{ color: PALETTE.text }}>
+            Terminals directory
+          </h2>
+          <p className="mt-2 text-sm" style={{ color: PALETTE.textMuted }}>
+            See where routes begin and end, plus amenities for riders.
+          </p>
           <Link
-            href={{ pathname: '/terminals' }}
-            className="mt-4 inline-flex items-center text-sm font-semibold text-brand-dark hover:underline"
+            href="/terminals"
+            className="mt-4 inline-flex items-center text-sm font-semibold hover:underline"
+            style={{ color: PALETTE.primary }}
           >
             Browse terminals
           </Link>
         </Card>
         <Card className="p-5">
-          <h2 className="text-lg font-semibold text-slate-900">Get involved</h2>
-          <p className="mt-2 text-sm text-slate-600">Learn how DaRoutes works and how to contribute reliable data.</p>
+          <h2 className="text-lg font-semibold" style={{ color: PALETTE.text }}>
+            Get involved
+          </h2>
+          <p className="mt-2 text-sm" style={{ color: PALETTE.textMuted }}>
+            Learn how DaRoutes works and how to contribute reliable data.
+          </p>
           <Link
-            href={{ pathname: '/explainer' }}
-            className="mt-4 inline-flex items-center text-sm font-semibold text-brand-dark hover:underline"
+            href="/explainer"
+            className="mt-4 inline-flex items-center text-sm font-semibold hover:underline"
+            style={{ color: PALETTE.primary }}
           >
             Read the explainer
           </Link>
         </Card>
       </section>
-    </div>
+    </HomepageClient>
   );
 }
