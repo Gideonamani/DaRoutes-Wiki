@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { Badge } from '@/components/Badge';
 import { MapEditor } from '@/components/MapEditor';
+import { RoutePageClient } from '@/components/RoutePageClient';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
 import type { Tables } from '@/lib/types';
 
@@ -196,6 +197,28 @@ export default async function RoutePage({ params }: RoutePageProps) {
         </div>
         {route.notes && <p className="mt-3 text-sm text-slate-600">{route.notes}</p>}
       </header>
+
+      {/* Interactive Components */}
+      <RoutePageClient
+        routeColor={route.color}
+        routeName={route.display_name}
+        routeCode={route.slug}
+        stops={stops.map((s, idx) => ({ id: idx + 1, name: s.name }))}
+        fares={{
+          currency: 'TZS',
+          peakMultiplier: 1.2,
+          offpeakMultiplier: 1.0,
+          table: faresData.map((f) => ({
+            from: stops.findIndex((s) => s.stop_id === f.from_stop_id) + 1,
+            to: stops.findIndex((s) => s.stop_id === f.to_stop_id) + 1,
+            price: Number(f.price_tzs)
+          }))
+        }}
+        operators={operators.map((op) => ({
+          name: op.name,
+          brandColor: route.color
+        }))}
+      />
 
       <section className="rounded-lg border border-slate-200 bg-white p-4">
         <h2 className="text-lg font-semibold text-slate-900">Route map</h2>
