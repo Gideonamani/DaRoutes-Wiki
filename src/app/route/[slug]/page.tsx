@@ -232,28 +232,30 @@ export default async function RoutePage({ params }: RoutePageProps) {
 
       <section className="rounded-lg border border-slate-200 bg-white p-4">
         <h2 className="text-lg font-semibold text-slate-900">Stops</h2>
-        <table className="mt-3 w-full table-auto text-sm">
-          <thead className="text-left text-xs uppercase text-slate-500">
-            <tr>
-              <th className="py-2">#</th>
-              <th>Stop</th>
-              <th>Ward</th>
-              <th>Coordinates</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stops.map((stop, index) => (
-              <tr key={stop.local_id} className="border-t border-slate-100">
-                <td className="py-2 text-xs text-slate-500">{index + 1}</td>
-                <td className="py-2 font-medium text-slate-800">{stop.name}</td>
-                <td className="py-2 text-slate-600">{stop.ward ?? '-'}</td>
-                <td className="py-2 text-xs text-slate-500">
-                  {stop.lat.toFixed(5)}, {stop.lng.toFixed(5)}
-                </td>
+        <div className="overflow-x-auto mt-3">
+          <table className="w-full table-auto text-sm">
+            <thead className="text-left text-xs uppercase text-slate-500">
+              <tr>
+                <th className="py-2 pr-4">#</th>
+                <th className="py-2 pr-4">Stop</th>
+                <th className="py-2 pr-4">Ward</th>
+                <th className="py-2">Coordinates</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {stops.map((stop, index) => (
+                <tr key={stop.local_id} className="border-t border-slate-100">
+                  <td className="py-2 text-xs text-slate-500 pr-4">{index + 1}</td>
+                  <td className="py-2 font-medium text-slate-800 pr-4 whitespace-nowrap">{stop.name}</td>
+                  <td className="py-2 text-slate-600 pr-4 whitespace-nowrap">{stop.ward ?? '-'}</td>
+                  <td className="py-2 text-xs text-slate-500 whitespace-nowrap">
+                    {stop.lat.toFixed(5)}, {stop.lng.toFixed(5)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-4">

@@ -171,38 +171,40 @@ export default async function ProfilePage() {
                     </h2>
                     {userStops.length > 0 ? (
                         <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
-                                    <tr>
-                                        <th className="px-6 py-3 font-medium">Name</th>
-                                        <th className="px-6 py-3 font-medium">Ward</th>
-                                        <th className="px-6 py-3 font-medium">Status</th>
-                                        <th className="px-6 py-3 font-medium text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {userStops.map((stop) => (
-                                        <tr key={stop.id} className="hover:bg-slate-50">
-                                            <td className="px-6 py-3 font-medium text-slate-900">{stop.name}</td>
-                                            <td className="px-6 py-3 text-slate-600">{stop.ward || '-'}</td>
-                                            <td className="px-6 py-3">
-                                                <Badge colorClassName={
-                                                    stop.status === 'published' ? 'bg-emerald-100 text-emerald-800' :
-                                                        stop.status === 'in_review' ? 'bg-amber-100 text-amber-800' :
-                                                            'bg-slate-100 text-slate-600'
-                                                }>
-                                                    {stop.status}
-                                                </Badge>
-                                            </td>
-                                            <td className="px-6 py-3 text-right">
-                                                <Link href={`/dashboard/stops/${stop.id}`} className="text-brand-dark hover:underline">
-                                                    Edit
-                                                </Link>
-                                            </td>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
+                                        <tr>
+                                            <th className="px-6 py-3 font-medium whitespace-nowrap">Name</th>
+                                            <th className="px-6 py-3 font-medium whitespace-nowrap">Ward</th>
+                                            <th className="px-6 py-3 font-medium whitespace-nowrap">Status</th>
+                                            <th className="px-6 py-3 font-medium text-right whitespace-nowrap">Actions</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {userStops.map((stop) => (
+                                            <tr key={stop.id} className="hover:bg-slate-50">
+                                                <td className="px-6 py-3 font-medium text-slate-900 whitespace-nowrap">{stop.name}</td>
+                                                <td className="px-6 py-3 text-slate-600 whitespace-nowrap">{stop.ward || '-'}</td>
+                                                <td className="px-6 py-3 whitespace-nowrap">
+                                                    <Badge colorClassName={
+                                                        stop.status === 'published' ? 'bg-emerald-100 text-emerald-800' :
+                                                            stop.status === 'in_review' ? 'bg-amber-100 text-amber-800' :
+                                                                'bg-slate-100 text-slate-600'
+                                                    }>
+                                                        {stop.status}
+                                                    </Badge>
+                                                </td>
+                                                <td className="px-6 py-3 text-right whitespace-nowrap">
+                                                    <Link href={`/dashboard/stops/${stop.id}`} className="text-brand-dark hover:underline">
+                                                        Edit
+                                                    </Link>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     ) : (
                         <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center">
