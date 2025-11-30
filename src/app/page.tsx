@@ -69,7 +69,7 @@ export default async function HomePage() {
   const publishedRoutes = (publishedData ?? []) as unknown as RouteSummaryRecord[];
 
   return (
-    <HomepageClient>
+    <HomepageClient routes={publishedRoutes}>
       {/* Hero Section */}
       <section className="rounded-lg bg-white p-6 shadow-sm mx-4 md:mx-6">
         <h1 className="text-2xl font-semibold" style={{ color: PALETTE.text }}>
@@ -80,91 +80,18 @@ export default async function HomePage() {
         </p>
       </section>
 
-      {/* Published Routes Grid */}
-      <section className="px-4 md:px-6 mt-6">
-        <header className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold" style={{ color: PALETTE.text }}>
-            Published routes
-          </h2>
-          {session && (
-            <Link
-              href="/dashboard/routes"
-              className="text-sm font-semibold hover:underline"
-              style={{ color: PALETTE.primary }}
-            >
-              Manage routes
-            </Link>
-          )}
-        </header>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {publishedRoutes.map((route) => (
-            <Card
-              key={route.id}
-              className="hover:shadow-md transition-shadow cursor-pointer border border-gray-100"
-            >
-              <Link href={`/route/${route.slug}`}>
-                <div className="flex items-center justify-between p-4 border-b">
-                  <div>
-                    <h2 className="font-semibold text-lg" style={{ color: PALETTE.text }}>
-                      {route.display_name}
-                    </h2>
-                    <p className="text-sm" style={{ color: PALETTE.textMuted }}>
-                      {route.start_stop?.name ?? 'TBD'} - {route.end_stop?.name ?? 'TBD'}
-                    </p>
-                  </div>
-                  <div className="flex gap-1">
-                    <div
-                      className="h-4 w-4 rounded-sm"
-                      style={{ backgroundColor: route.color }}
-                    />
-                    <div
-                      className="h-4 w-4 rounded-sm"
-                      style={{ backgroundColor: PALETTE.success }}
-                    />
-                  </div>
-                </div>
-                <div className="p-4 flex flex-col gap-2">
-                  {/* Map Preview */}
-                  <div className="overflow-hidden rounded-md">
-                    <MapPreview color={route.color} secondary={PALETTE.success} />
-                  </div>
-                  {/* Route metadata */}
-                  <div className="flex justify-between text-sm mt-2" style={{ color: PALETTE.textMuted }}>
-                    <span className="flex items-center gap-1">
-                      <Bus size={14} /> Route
-                    </span>
-                    {route.hours && (
-                      <span className="flex items-center gap-1">
-                        <Clock size={14} /> {route.hours}
-                      </span>
-                    )}
-                    <span className="flex items-center gap-1">
-                      <CreditCard size={14} /> TZS
-                    </span>
-                  </div>
-                  {/* Badges */}
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {(route.corridors ?? []).map((corridor: string) => (
-                      <Badge key={corridor}>{corridor}</Badge>
-                    ))}
-                    {route.est_buses && (
-                      <Badge colorClassName="bg-emerald-100 text-emerald-800">
-                        {route.est_buses} buses
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            </Card>
-          ))}
-          {!publishedRoutes.length && (
-            <Card className="p-6 text-sm text-slate-500 col-span-full">
-              No routes published yet. Head to the dashboard to create one.
-            </Card>
-          )}
+      {/* Manage Link (if logged in) */}
+      {session && (
+        <div className="px-4 md:px-6 mt-4 flex justify-end">
+          <Link
+            href="/dashboard/routes"
+            className="text-sm font-semibold hover:underline"
+            style={{ color: PALETTE.primary }}
+          >
+            Manage routes
+          </Link>
         </div>
-      </section>
+      )}
 
       {/* Info Cards */}
       <section className="grid gap-4 md:grid-cols-2 px-4 md:px-6 mt-8">
