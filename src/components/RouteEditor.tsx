@@ -815,8 +815,6 @@ export function RouteEditor({
 
   const isBusy = isSubmitting || isPending;
 
-  return (
-
   const watchedValues = watch();
   const pathMeta = useMemo(() => ({ count: routePath.length }), [routePath]);
 
