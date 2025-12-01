@@ -1,6 +1,5 @@
 import React from 'react';
-import { Bus, Clock, CreditCard } from 'lucide-react';
-import { PALETTE } from '@/lib/designTokens';
+
 
 interface MapPreviewProps {
     color?: string;

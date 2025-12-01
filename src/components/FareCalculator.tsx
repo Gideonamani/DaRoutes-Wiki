@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { PALETTE } from '@/lib/designTokens';
+
 
 interface FareCalculatorProps {
     peak: boolean;

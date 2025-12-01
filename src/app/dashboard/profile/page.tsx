@@ -157,7 +157,7 @@ export default async function ProfilePage() {
                         </div>
                     ) : (
                         <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center">
-                            <p className="text-slate-500 text-sm">You haven't created any routes yet.</p>
+                            <p className="text-slate-500 text-sm">You haven&apos;t created any routes yet.</p>
                             <Link href="/dashboard/routes/new" className="text-brand-dark font-medium text-sm hover:underline mt-2 inline-block">
                                 Create your first route
                             </Link>
@@ -208,7 +208,7 @@ export default async function ProfilePage() {
                         </div>
                     ) : (
                         <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center">
-                            <p className="text-slate-500 text-sm">You haven't added any stops yet.</p>
+                            <p className="text-slate-500 text-sm">You haven&apos;t added any stops yet.</p>
                         </div>
                     )}
                 </section>

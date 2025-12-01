@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Bus, Clock, CreditCard } from 'lucide-react';
+
 import { Card } from '@/components/Card';
-import { Badge } from '@/components/Badge';
-import { MapPreview } from '@/components/MapPreview';
+
+
 import { HomepageClient } from '@/components/HomepageClient';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
 import type { Tables } from '@/lib/types';

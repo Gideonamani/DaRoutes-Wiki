@@ -171,7 +171,7 @@ export function HomepageClient({ routes, children }: HomepageClientProps) {
 
             {/* Footer */}
             <footer className="mt-12 md:mt-16 text-center text-sm py-6 border-t" style={{ color: PALETTE.textMuted, backgroundColor: PALETTE.surface }}>
-                <p>DARoutes © {new Date().getFullYear()} — Mapping Dar es Salaam's Public Transport Network</p>
+                <p>DARoutes © {new Date().getFullYear()} — Mapping Dar es Salaam&apos;s Public Transport Network</p>
             </footer>
         </div>
     );

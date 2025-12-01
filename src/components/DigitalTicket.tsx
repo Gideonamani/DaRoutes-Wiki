@@ -1,5 +1,5 @@
 import React from 'react';
-import { PALETTE } from '@/lib/designTokens';
+
 
 interface DigitalTicketProps {
     operatorName: string;

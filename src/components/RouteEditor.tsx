@@ -22,9 +22,14 @@ import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-p
 
 import { getSupabaseBrowserClient } from '@/lib/supabaseClient';
 
-import { DEFAULT_ROUTE_COLORS, isReadableOn } from '@/lib/colors';
+import { DEFAULT_ROUTE_COLORS } from '@/lib/colors';
 
-import { MapEditor } from './MapEditor';
+import dynamic from 'next/dynamic';
+
+const MapEditor = dynamic(() => import('./MapEditor').then((mod) => mod.MapEditor), {
+  ssr: false,
+  loading: () => <div className="h-80 w-full rounded-lg border border-slate-200 bg-slate-50 animate-pulse" />
+});
 
 import { StopPicker } from './StopPicker';
 
@@ -32,11 +37,14 @@ import { FaresEditor } from './FaresEditor';
 
 import { Upload } from './Upload';
 
-import { RouteSplitBadgeDesigner } from './RouteSplitBadgeDesigner';
+const RouteSplitBadgeDesigner = dynamic(
+  () => import('./RouteSplitBadgeDesigner').then((mod) => mod.RouteSplitBadgeDesigner),
+  { ssr: false }
+);
 import type { Tables } from '@/lib/types';
-import { WORKFLOW_STATUS_LABELS, WORKFLOW_STATUS_OPTIONS } from '@/lib/workflowStatus';
+import { WORKFLOW_STATUS_OPTIONS } from '@/lib/workflowStatus';
 import type { AttachmentDraft, RouteFormValues, StopFormValue } from './RouteEditor.types';
-import { Eye, Save, Upload as UploadIcon, Info, Trash2, FileText, Map as MapIcon } from 'lucide-react';
+import { Eye, Save, Upload as UploadIcon, Info, Trash2, Map as MapIcon } from 'lucide-react';
 import { parseRouteFile } from '@/lib/routeFileParsers';
 import { PathPreview } from '@/components/PathPreview';
 const slugify = (value: string) =>
@@ -459,9 +467,7 @@ export function RouteEditor({
 
   const selectedColor = watch('color');
 
-  const colorIsReadable = isReadableOn(selectedColor, '#ffffff');
 
-  const statusValue = watch('status');
 
   const onSubmit: SubmitHandler<RouteFormValues> = async (values) => {
 
